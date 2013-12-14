@@ -3,7 +3,7 @@
 module Main where
 
 import           Control.Error
-import           Control.Exception
+import qualified Control.Exception as E
 import           Control.Monad
 import           Control.Monad.Trans.Class
 import           Data.Configurator
@@ -94,8 +94,8 @@ handleCmd c appData (Init proj temp amend) = do
   targetExists <- doesDirectoryExist proj
   unless targetExists $ createDirectory proj
   projPath <- canonicalizePath proj
-  res <- runEitherT (instantiateTemplate proj amend c (appData </> temp) projPath) `catch` \(exc :: SomeException) ->
-    unless targetExists (removeDirectoryRecursive projPath) >> throw exc
+  res <- runEitherT (instantiateTemplate proj amend c (appData </> temp) projPath) `E.catch` \(exc :: E.SomeException) ->
+    unless targetExists (removeDirectoryRecursive projPath) >> E.throwIO exc
   case res of
     Left m -> do
       T.putStrLn m
