@@ -16,7 +16,7 @@ install:
 
 script:
  - cabal-$CABALVER configure --enable-tests --enable-benchmarks -v2 --ghc-options="-Wall -Werror"
- - cabal-$CABALVER build
+ - cabal-$CABALVER build -j0
  - cabal-$CABALVER test
  - cabal-$CABALVER check
  - hlint src
