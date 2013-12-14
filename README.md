@@ -1,10 +1,20 @@
 Themplate
 =========
 
+[![Build Status](https://travis-ci.org/bennofs/themplate.png?branch=master)](https://travis-ci.org/bennofs/themplate)
+
 This is a very simple program for creating project templates. 
 
 Installing Themplate
 --------------------
+
+### From hackage:
+
+```
+$ cabal install themplate
+```
+
+### From repository:
 
 Checkout the source code:
 
@@ -67,14 +77,12 @@ in `{{` and `}}`. In a pattern, the following special forms are substituted:
 - `??name??` will be substituted for the value of the configuration option `name`. If the configuration option doesn't exist, the pattern will
    evaluate to the empty string.
 
-There is one special configuration option, `project.name`. This will always be set to the current project's name. 
-
-`??name??` patterns are checked prior to ``$$name$$`` patterns, so the following:
+There is one special configuration option, `project.name`. This will always be set to the current project's name. `??name??` patterns are checked prior to ``$$name$$`` patterns, so the following:
 
 ```
 {{homepage:      http://github.com/??github.user??/$$project.name$$/}}
 ```
 
-won't throw an error if `github.user` is unset, even if `project.name` is unset.
+won't throw an error if `github.user` is unset, even if `project.name` was unset.
 
 You can find an example template at https://github.com/bennofs/dotfiles/tree/master/.themplate/.
