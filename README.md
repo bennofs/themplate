@@ -40,7 +40,6 @@ $ themplate init <project name> <template name>
 ```
 
 This will initialize the template with the given name in a new directory with the name of the project.
-
 To list all available templates, run:
 
 ```
