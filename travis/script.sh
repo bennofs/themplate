@@ -6,7 +6,7 @@ nc='\e[0m' # No Color
 
 function step {
   echo -e "${green}$1 ...${nc}"
-  bash /dev/stdin
+  bash /dev/stdin || exit 1
 }
 
 function step_suppress {
