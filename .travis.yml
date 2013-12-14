@@ -15,22 +15,8 @@ install:
  - cabal-$CABALVER install --only-dependencies --enable-tests --enable-benchmarks -j
 
 script:
- - cabal-$CABALVER configure --enable-tests --enable-benchmarks -v2 --ghc-options="-Wall -Werror"
- - cabal-$CABALVER build -j0
- - cabal-$CABALVER test
- - cabal-$CABALVER check
+ - travis/script.sh
  - hlint src
- - cabal-$CABALVER sdist # tests that a source-distribution can be generated
-
-# The following scriptlet checks that the resulting source distribution can be built & installed
- - export SRC_TGZ=$(cabal-$CABALVER info . | awk '{print $2 ".tar.gz";exit}') ;
-   cd dist/;
-   if [ -f "$SRC_TGZ" ]; then
-      cabal-$CABALVER install "$SRC_TGZ";
-   else
-      echo "expected '$SRC_TGZ' not found";
-      exit 1;
-   fi
 
 matrix:
   allow_failures:

@@ -11,7 +11,8 @@ bug-reports:   http://github.com/bennofs/themplate/issues
 copyright:     Copyright (C) 2013 Benno Fünfstück
 synopsis:      themplate
 description:   themplate
-build-type:    Custom
+build-type:    Simple
+category:      Application, Console, Development, Template
 
 extra-source-files:
   .ghci
@@ -27,6 +28,7 @@ source-repository head
 executable themplate
   hs-source-dirs: src
   main-is: Main.hs
+  other-modules: Pattern
   default-language: Haskell2010
   ghc-options: -Wall
   build-depends:
