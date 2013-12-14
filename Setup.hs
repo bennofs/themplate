@@ -51,6 +51,7 @@ generateBuildModule verbosity pkg lbi flags = do
       ]
     withLibLBI pkg lbi $ \_ liblbi ->
       modifyIORef contents (appendDL $ depsDef liblbi suitelbi)
+    
     contents' <- fmap ($ []) $ readIORef contents
     rewriteFile (map fixchar $ dir </> "Build_" ++ testName suite ++ ".hs") $ unlines contents'
   where
