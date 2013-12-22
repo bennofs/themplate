@@ -76,7 +76,11 @@ instantiateTemplate proj amend c temp target = do
 
     e <- lift $ doesFileExist (target </> file')
     when (e && not amend) $ left $ ":Error: Target file " <> T.pack (target </> file') <> " does already exist."
-    unless e $ lift $ T.writeFile (target </> file') content'
+    unless e $ lift $ do 
+      T.writeFile (target </> file') content'
+      perm <- getPermissions (temp </> file)
+      perm' <- getPermissions (target </> file')
+      setPermissions (target </> file') $ perm' { executable = executable perm }
     
   forM_ dirs $ \dir -> do 
     lift $ createDirectoryIfMissing True $ target </> dir 
