@@ -17,6 +17,7 @@ import           Prelude hiding (lookup)
 import           System.Directory
 import           System.Exit
 import           System.FilePath
+import           System.IO.Temp
 
 -- | This data type represents the result of parsing the command line options.
 data Cmd = Init String String Bool
@@ -86,6 +87,25 @@ instantiateTemplate proj amend c temp target = do
     lift $ createDirectoryIfMissing True $ target </> dir 
     instantiateTemplate proj amend c (temp </> dir) (target </> dir)
 
+-- | Copy the contents of a directory to another directory
+copyDirContents :: String -> String -> IO ()
+copyDirContents source target = do
+  contents <- filter (not . flip elem ["..","."]) <$> getDirectoryContents source
+  dirs <- filterM (doesDirectoryExist . (source </>)) contents
+  files <- filterM (doesFileExist . (source </>)) contents
+  forM_ files $ \file -> copyFile (source </> file) (target </> file)
+  forM_ dirs $ \dir -> do 
+    createDirectoryIfMissing False (target </> dir)
+    copyDirContents (source </> dir) (target </> dir)
+
+-- | Copy the project directory to a temporary location, as a backup (if anything goes wrong).
+backup :: String -> IO ()
+backup proj = do
+  tmp <- getTemporaryDirectory >>= flip createTempDirectory "themplate"
+  putStrLn $ "Creating backup of files in: " ++ tmp
+  copyDirContents proj tmp
+  
+
 -- | Top level subcommand handler. Switches on the subcommand and performs the given action.
 -- Takes 3 arguments: The configuration, the path to the appUserDataDirectory and the command.
 handleCmd :: Config -> String -> Cmd -> IO ()
@@ -96,6 +116,7 @@ handleCmd c appData (Init proj temp amend) = do
     putStrLn $ "Error: Template " <> temp <> " is not installed."
     exitFailure
   targetExists <- doesDirectoryExist proj
+  when targetExists $ backup proj
   unless targetExists $ createDirectory proj
   projPath <- canonicalizePath proj
   res <- runEitherT (instantiateTemplate proj amend c (appData </> temp) projPath) `E.catch` \(exc :: E.SomeException) ->
@@ -103,7 +124,7 @@ handleCmd c appData (Init proj temp amend) = do
   case res of
     Left m -> do
       T.putStrLn m
-      removeDirectoryRecursive projPath
+      unless targetExists $ removeDirectoryRecursive projPath
       exitFailure
     Right () -> exitSuccess
 
