@@ -65,10 +65,10 @@ instantiateTemplate proj amend c temp target = do
   contents <- lift $ filter (not . flip elem [".",".."]) <$> getDirectoryContents temp
   dirs <- lift $ filterM (doesDirectoryExist . (temp </>)) contents
   files <- lift $ filterM (doesFileExist . (temp </>)) contents
-  
+
   forM_ files $ \file -> do
     let lookupVar "project.name" = return $ Just $ T.pack proj
-        lookupVar x = lookup c x 
+        lookupVar x = lookup c x
     let substitute = fmapLT (mappend $ T.pack file <> ":Error: Undeclared variable ") . substituteBetween "{{" "}}" (evalPattern lookupVar)
 
     content <- lift $ T.readFile (temp </> file)
@@ -77,14 +77,14 @@ instantiateTemplate proj amend c temp target = do
 
     e <- lift $ doesFileExist (target </> file')
     when (e && not amend) $ left $ ":Error: Target file " <> T.pack (target </> file') <> " does already exist."
-    unless e $ lift $ do 
+    unless e $ lift $ do
       T.writeFile (target </> file') content'
       perm <- getPermissions (temp </> file)
       perm' <- getPermissions (target </> file')
       setPermissions (target </> file') $ perm' { executable = executable perm }
-    
-  forM_ dirs $ \dir -> do 
-    lift $ createDirectoryIfMissing True $ target </> dir 
+
+  forM_ dirs $ \dir -> do
+    lift $ createDirectoryIfMissing True $ target </> dir
     instantiateTemplate proj amend c (temp </> dir) (target </> dir)
 
 -- | Copy the contents of a directory to another directory
@@ -94,7 +94,7 @@ copyDirContents source target = do
   dirs <- filterM (doesDirectoryExist . (source </>)) contents
   files <- filterM (doesFileExist . (source </>)) contents
   forM_ files $ \file -> copyFile (source </> file) (target </> file)
-  forM_ dirs $ \dir -> do 
+  forM_ dirs $ \dir -> do
     createDirectoryIfMissing False (target </> dir)
     copyDirContents (source </> dir) (target </> dir)
 
@@ -104,7 +104,6 @@ backup proj = do
   tmp <- getTemporaryDirectory >>= flip createTempDirectory "themplate"
   putStrLn $ "Creating backup of files in: " ++ tmp
   copyDirContents proj tmp
-  
 
 -- | Top level subcommand handler. Switches on the subcommand and performs the given action.
 -- Takes 3 arguments: The configuration, the path to the appUserDataDirectory and the command.
