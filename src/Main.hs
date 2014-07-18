@@ -98,13 +98,6 @@ copyDirContents source target = do
     createDirectoryIfMissing False (target </> dir)
     copyDirContents (source </> dir) (target </> dir)
 
--- | Copy the project directory to a temporary location, as a backup (if anything goes wrong).
-backup :: String -> IO ()
-backup proj = do
-  tmp <- getTemporaryDirectory >>= flip createTempDirectory "themplate"
-  putStrLn $ "Creating backup of files in: " ++ tmp
-  copyDirContents proj tmp
-
 -- | Top level subcommand handler. Switches on the subcommand and performs the given action.
 -- Takes 3 arguments: The configuration, the path to the appUserDataDirectory and the command.
 handleCmd :: Config -> String -> Cmd -> IO ()
@@ -115,7 +108,6 @@ handleCmd c appData (Init proj temp amend) = do
     putStrLn $ "Error: Template " <> temp <> " is not installed."
     exitFailure
   targetExists <- doesDirectoryExist proj
-  when targetExists $ backup proj
   unless targetExists $ createDirectory proj
   projPath <- canonicalizePath proj
   res <- runEitherT (instantiateTemplate proj amend c (appData </> temp) projPath) `E.catch` \(exc :: E.SomeException) ->
