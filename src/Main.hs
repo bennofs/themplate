@@ -17,7 +17,6 @@ import           Prelude hiding (lookup)
 import           System.Directory
 import           System.Exit
 import           System.FilePath
-import           System.IO.Temp
 
 -- | This data type represents the result of parsing the command line options.
 data Cmd = Init String String Bool
