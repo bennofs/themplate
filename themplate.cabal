@@ -9,8 +9,8 @@ stability:     experimental
 homepage:      http://github.com/bennofs/themplate/
 bug-reports:   http://github.com/bennofs/themplate/issues
 copyright:     Copyright (C) 2013-2014 Benno Fünfstück
-synopsis:      themplate
-description:   themplate
+synopsis:      Project templating tool
+description:   Themplate is a tool to generate projects from templates. The templating language is described at https://github.com/bennofs/themplate.
 build-type:    Simple
 category:      Application, Console, Development, Template
 
