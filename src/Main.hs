@@ -25,8 +25,8 @@ data Cmd = Init String String Bool
 -- | Command line argument parser for the 'init' subcommand. The init command can be used to instantiate templates.
 initCmd :: ParserInfo Cmd
 initCmd = info (helper <*> parser) (fullDesc <> progDesc "Use an installed template.")
-  where nameOpt = argument Just (metavar "NAME" <> help "The project name")
-        templatesOpt = argument Just (metavar "TEMPLATE" <> help "Name of the template which to use for this project")
+  where nameOpt = strArgument (metavar "NAME" <> help "The project name")
+        templatesOpt = strArgument (metavar "TEMPLATE" <> help "Name of the template which to use for this project")
         amendOpt = switch (short 'a' <> long "amend" <> help "Don't fail when a file exists. Instead, ignore it and continue.")
         parser = Init <$> nameOpt <*> templatesOpt <*> amendOpt
 
