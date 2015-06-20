@@ -41,4 +41,4 @@ executable themplate
     , either
     , optparse-applicative >= 0.10
     , configurator
-    , errors
+    , errors >= 2
