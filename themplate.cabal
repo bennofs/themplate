@@ -36,7 +36,8 @@ executable themplate
     , filepath
     , directory
     , text
-    , transformers
+    , transformers >= 0.2
+    , transformers-compat >= 0.3
     , either
     , optparse-applicative >= 0.10
     , configurator

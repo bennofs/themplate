@@ -3,7 +3,7 @@ module Pattern where
 
 import           Control.Applicative
 import           Control.Monad.Trans.Class
-import           Control.Monad.Trans.Either
+import           Control.Monad.Trans.Except
 import           Control.Monad.Trans.Maybe
 import           Data.Maybe
 import           Data.Monoid
@@ -27,7 +27,7 @@ substituteBetween open close f t
 --
 --   - $$a$$ will be replaced with @f a@, returning Left a if @f@ returns Nothing
 --   - ??a?? will be replaced with @f a@, returning an empty string if @f@ returns Nothing
-evalPattern :: Monad f => (T.Text -> f (Maybe T.Text)) -> T.Text -> EitherT T.Text f T.Text
+evalPattern :: Monad f => (T.Text -> f (Maybe T.Text)) -> T.Text -> ExceptT T.Text f T.Text
 evalPattern f t = replaceRequiredVar . fromMaybe T.empty =<< runMaybeT (replaceOptionalVar t)
-  where replaceRequiredVar = substituteBetween "$$" "$$" (\x -> maybe (left x) return =<< lift (f x))
+  where replaceRequiredVar = substituteBetween "$$" "$$" (\x -> maybe (throwE x) return =<< lift (f x))
         replaceOptionalVar = substituteBetween "??" "??" (MaybeT . lift . f)

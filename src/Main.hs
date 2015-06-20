@@ -6,6 +6,7 @@ import           Control.Error
 import qualified Control.Exception as E
 import           Control.Monad
 import           Control.Monad.Trans.Class
+import           Control.Monad.Trans.Except
 import           Data.Configurator
 import           Data.Configurator.Types(Config())
 import           Data.Monoid
@@ -59,7 +60,7 @@ availableTemplates appData = getDirectoryContents appData >>= filterM f
 -- | Instantiate a template, copying the files and resolving all conditionals and variables.
 -- The first argument is the project name, the second argument the directory of the template and the third argument is
 -- the target directory, to which the files get copied.
-instantiateTemplate :: String -> Bool -> Config -> FilePath -> FilePath -> EitherT T.Text IO ()
+instantiateTemplate :: String -> Bool -> Config -> FilePath -> FilePath -> ExceptT T.Text IO ()
 instantiateTemplate proj amend c temp target = do
   contents <- lift $ filter (not . flip elem [".",".."]) <$> getDirectoryContents temp
   dirs <- lift $ filterM (doesDirectoryExist . (temp </>)) contents
@@ -75,7 +76,7 @@ instantiateTemplate proj amend c temp target = do
     file' <- fmap T.unpack $ substitute $ T.pack file
 
     e <- lift $ doesFileExist (target </> file')
-    when (e && not amend) $ left $ ":Error: Target file " <> T.pack (target </> file') <> " does already exist."
+    when (e && not amend) $ throwE $ ":Error: Target file " <> T.pack (target </> file') <> " does already exist."
     unless e $ lift $ do
       T.writeFile (target </> file') content'
       perm <- getPermissions (temp </> file)
@@ -109,7 +110,7 @@ handleCmd c appData (Init proj temp amend) = do
   targetExists <- doesDirectoryExist proj
   unless targetExists $ createDirectory proj
   projPath <- canonicalizePath proj
-  res <- runEitherT (instantiateTemplate proj amend c (appData </> temp) projPath) `E.catch` \(exc :: E.SomeException) ->
+  res <- runExceptT (instantiateTemplate proj amend c (appData </> temp) projPath) `E.catch` \(exc :: E.SomeException) ->
     unless targetExists (removeDirectoryRecursive projPath) >> E.throwIO exc
   case res of
     Left m -> do
