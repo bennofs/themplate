@@ -27,7 +27,7 @@ substituteBetween open close f t
 --
 --   - $$a$$ will be replaced with @f a@, returning Left a if @f@ returns Nothing
 --   - ??a?? will be replaced with @f a@, returning an empty string if @f@ returns Nothing
-evalPattern :: Monad f => (T.Text -> f (Maybe T.Text)) -> T.Text -> ExceptT T.Text f T.Text
+evalPattern :: (Applicative f, Monad f) => (T.Text -> f (Maybe T.Text)) -> T.Text -> ExceptT T.Text f T.Text
 evalPattern f t = replaceRequiredVar . fromMaybe T.empty =<< runMaybeT (replaceOptionalVar t)
   where replaceRequiredVar = substituteBetween "$$" "$$" (\x -> maybe (throwE x) return =<< lift (f x))
         replaceOptionalVar = substituteBetween "??" "??" (MaybeT . lift . f)
