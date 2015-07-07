@@ -8,6 +8,7 @@ import           Control.Monad.Trans.Maybe
 import           Data.Maybe
 import           Data.Monoid
 import qualified Data.Text as T
+import           Prelude
 
 -- | Apply a function to replace the text between a given start and end tag.
 -- Example:

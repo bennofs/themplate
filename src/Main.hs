@@ -6,7 +6,6 @@ import           Control.Error
 import qualified Control.Exception as E
 import           Control.Monad
 import           Control.Monad.Trans.Class
-import           Control.Monad.Trans.Except
 import           Data.Configurator
 import           Data.Configurator.Types(Config())
 import           Data.Monoid
