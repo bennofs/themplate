@@ -2,6 +2,7 @@ sudo: false
 before_install:
  - travis_retry cabal-$CABALVER update
  - export PATH=/opt/ghc/$GHCVER/bin:~/.cabal/bin:$PATH
+ - cabal-$CABALVER install -j hlint
 
 install:
  - cabal-$CABALVER install --only-dependencies --enable-tests --enable-benchmarks -j
