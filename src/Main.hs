@@ -19,7 +19,7 @@ import           System.Exit
 import           System.FilePath
 
 -- | This data type represents the result of parsing the command line options.
-data Cmd = Init String String Bool
+data Cmd = Init String String Bool Bool
          | List
 
 -- | Command line argument parser for the 'init' subcommand. The init command can be used to instantiate templates.
@@ -28,7 +28,8 @@ initCmd = info (helper <*> parser) (fullDesc <> progDesc "Use an installed templ
   where nameOpt = strArgument (metavar "NAME" <> help "The project name")
         templatesOpt = strArgument (metavar "TEMPLATE" <> help "Name of the template which to use for this project")
         amendOpt = switch (short 'a' <> long "amend" <> help "Don't fail when a file exists. Instead, ignore it and continue.")
-        parser = Init <$> nameOpt <*> templatesOpt <*> amendOpt
+        overwriteOpt = switch (short 'o' <> long "overwrite" <> help "Don't fail when a file exists. Instead, overwrite it and continue.")
+        parser = Init <$> nameOpt <*> templatesOpt <*> amendOpt <*> overwriteOpt
 
 -- | Command line argument parser for the 'list' subcommand. The list subcommand prints all installed templates.
 listCmd :: ParserInfo Cmd
@@ -59,8 +60,8 @@ availableTemplates appData = getDirectoryContents appData >>= filterM f
 -- | Instantiate a template, copying the files and resolving all conditionals and variables.
 -- The first argument is the project name, the second argument the directory of the template and the third argument is
 -- the target directory, to which the files get copied.
-instantiateTemplate :: String -> Bool -> Config -> FilePath -> FilePath -> ExceptT T.Text IO ()
-instantiateTemplate proj amend c temp target = do
+instantiateTemplate :: String -> Bool -> Bool -> Config -> FilePath -> FilePath -> ExceptT T.Text IO ()
+instantiateTemplate proj amend overwrite c temp target = do
   contents <- lift $ filter (not . flip elem [".",".."]) <$> getDirectoryContents temp
   dirs <- lift $ filterM (doesDirectoryExist . (temp </>)) contents
   files <- lift $ filterM (doesFileExist . (temp </>)) contents
@@ -75,8 +76,9 @@ instantiateTemplate proj amend c temp target = do
     file' <- fmap T.unpack $ substitute $ T.pack file
 
     e <- lift $ doesFileExist (target </> file')
-    when (e && not amend) $ throwE $ ":Error: Target file " <> T.pack (target </> file') <> " does already exist."
-    unless e $ lift $ do
+    when (e && not amend && not overwrite) $
+      throwE $ ":Error: Target file " <> T.pack (target </> file') <> " does already exist."
+    unless (e && not overwrite) $ lift $ do
       T.writeFile (target </> file') content'
       perm <- getPermissions (temp </> file)
       perm' <- getPermissions (target </> file')
@@ -84,24 +86,13 @@ instantiateTemplate proj amend c temp target = do
 
   forM_ dirs $ \dir -> do
     lift $ createDirectoryIfMissing True $ target </> dir
-    instantiateTemplate proj amend c (temp </> dir) (target </> dir)
-
--- | Copy the contents of a directory to another directory
-copyDirContents :: String -> String -> IO ()
-copyDirContents source target = do
-  contents <- filter (not . flip elem ["..","."]) <$> getDirectoryContents source
-  dirs <- filterM (doesDirectoryExist . (source </>)) contents
-  files <- filterM (doesFileExist . (source </>)) contents
-  forM_ files $ \file -> copyFile (source </> file) (target </> file)
-  forM_ dirs $ \dir -> do
-    createDirectoryIfMissing False (target </> dir)
-    copyDirContents (source </> dir) (target </> dir)
+    instantiateTemplate proj amend overwrite c (temp </> dir) (target </> dir)
 
 -- | Top level subcommand handler. Switches on the subcommand and performs the given action.
 -- Takes 3 arguments: The configuration, the path to the appUserDataDirectory and the command.
 handleCmd :: Config -> String -> Cmd -> IO ()
 handleCmd _ appData List = mapM_ putStrLn =<< availableTemplates appData
-handleCmd c appData (Init proj temp amend) = do
+handleCmd c appData (Init proj temp amend overwrite) = do
   e <- doesDirectoryExist (appData </> temp)
   unless e $ do
     putStrLn $ "Error: Template " <> temp <> " is not installed."
@@ -109,7 +100,8 @@ handleCmd c appData (Init proj temp amend) = do
   targetExists <- doesDirectoryExist proj
   unless targetExists $ createDirectory proj
   projPath <- canonicalizePath proj
-  res <- runExceptT (instantiateTemplate proj amend c (appData </> temp) projPath) `E.catch` \(exc :: E.SomeException) ->
+  res <- runExceptT (instantiateTemplate proj amend overwrite c (appData </> temp) projPath)
+   `E.catch` \(exc :: E.SomeException) ->
     unless targetExists (removeDirectoryRecursive projPath) >> E.throwIO exc
   case res of
     Left m -> do
